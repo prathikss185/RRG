@@ -16,8 +16,22 @@ st.set_page_config(page_title="Dynamic RRG Graphs", layout="wide")
 
 @st.cache_data
 def download_data(tickers, start_date, end_date):
-    data = yf.download(tickers, start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'))['Adj Close']
-    return data
+    try:
+        # Download data
+        data = yf.download(tickers, start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'))
+
+        # Display the data to check its structure
+        st.write(data)  # Print the entire data for debugging
+
+        # Check if 'Adj Close' exists and return it
+        if 'Adj Close' in data.columns:
+            return data['Adj Close']
+        else:
+            st.error("Error: 'Adj Close' column not found in downloaded data.")
+            return None
+    except Exception as e:
+        st.error(f"Error downloading data: {e}")
+        return None
 
 
 def calculate_rrg_components(data, benchmark):
@@ -83,6 +97,20 @@ def create_rrg_plot(normalized_rs_ratio, normalized_rs_momentum, ticker, trail_l
 
 
 def process_data(trail_length, equity, benchmark_index, data):
+    # Ensure data is not None
+    if data is None:
+        st.error("Error: Failed to download data. Please check your tickers and date range.")
+        return
+
+    # Check if the expected columns are present
+    if benchmark_index not in data.columns:
+        st.error(f"Error: Benchmark index '{benchmark_index}' not found in data.")
+        return
+
+    if any(ticker not in data.columns for ticker in equity):
+        st.error("Error: One or more equity tickers are missing in the downloaded data.")
+        return
+
     rs_ratio, rs_momentum = calculate_rrg_components_improved(data[equity], data[benchmark_index])
 
     normalized_rs_ratio = normalize_data(rs_ratio)
