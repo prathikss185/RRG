@@ -1,9 +1,3 @@
-"""
-Author: Yashaswa Varshney
-Date: 1/7/24
-
-"""
-
 from datetime import datetime, timedelta
 
 import numpy as np
